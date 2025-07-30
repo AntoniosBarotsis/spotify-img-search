@@ -9,5 +9,13 @@ license = "GPL-3.0"
 
 [dependencies]
 anyhow = "1.0.98"
-dotenvy = "0.15.7"
-rspotify = "0.15.0"
+base64 = "0.22.1"
+indicatif = "0.18.0"
+reqwest = "0.12.22"
+rspotify = { version = "0.15.0", default-features = false, features = [
+  "env-file",
+  "client-reqwest",
+  "reqwest-rustls-tls",
+  "cli",
+] }
+tokio = { version = "1.47.0", features = ["fs", "macros", "rt-multi-thread"] }

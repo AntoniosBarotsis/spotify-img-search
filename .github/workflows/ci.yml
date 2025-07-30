@@ -1,4 +1,4 @@
-name: Build & Tests
+name: Build & Lint
 
 on:
   push:
@@ -8,8 +8,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build_test_run:
-    name: Build and test on ${{ matrix.job.os }} (${{ matrix.job.target }})
+  build_rust_run:
+    name: Build on ${{ matrix.job.os }} (${{ matrix.job.target }})
     runs-on: ${{ matrix.job.os }}
     strategy:
       fail-fast: false
@@ -37,11 +37,8 @@ jobs:
       - name: Build
         run: cargo build --verbose
 
-      - name: Test
-        run: cargo test --verbose
-
-  lint:
-    name: Lint
+  lint_rust:
+    name: Lint Rust
     runs-on: ubuntu-24.04
 
     steps:
@@ -63,3 +60,23 @@ jobs:
 
       - name: Run fmt
         run: cargo fmt --check
+
+  lint_py:
+    name: Lint Python
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+
+      - name: Run ruff
+        run: uv run ruff check

@@ -12,3 +12,8 @@ target/
 *.pdb
 
 .env
+.venv
+.spotify_token_cache.json
+embeddings_metadata.json
+image_embeddings.pt
+images/*
