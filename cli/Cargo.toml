@@ -7,3 +7,4 @@ edition = "2024"
 tokio = { version = "1.47.0", features = ["fs", "macros", "rt-multi-thread"] }
 spotify-api = { path = "../spotify-api" }
 anyhow = "1.0.98"
+clap = { version = "4.5.42", features = ["derive"] }
