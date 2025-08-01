@@ -71,6 +71,7 @@ async fn get_from_liked(spotify: AuthCodeSpotify) -> anyhow::Result<HashSet<Song
       .await?;
 
     bar.set_length(u64::from(page.total));
+    bar.set_message("Fetching song metadata");
 
     for item in page.items {
       let name = item.track.name;
@@ -94,7 +95,7 @@ async fn get_from_liked(spotify: AuthCodeSpotify) -> anyhow::Result<HashSet<Song
       let id = item.track.id.unwrap().id().to_owned();
 
       bar.inc(1);
-      bar.set_message("Fetching ".to_owned() + &name);
+      // bar.set_message("Fetching ".to_owned() + &name);
       let _ = songs.insert(Song {
         id,
         name,
