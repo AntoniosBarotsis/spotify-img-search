@@ -46,6 +46,8 @@ async fn download_image(
   }
 
   // TODO: If image sizes are always ordered, maybe consider using the smaller one?
+  // SAFETY: We already check if this is empty above and exit if so
+  #[allow(clippy::indexing_slicing)]
   let response = client.get(&song.images[0]).send().await?;
   let image_data = response.bytes().await?;
 
@@ -251,8 +253,7 @@ impl TryFrom<PlaylistItem> for Song {
       // FIXME: If its local, id wont exist
       let id = item
         .id
-        .context("Local songs are not handled yet.")
-        .unwrap()
+        .expect("Local songs are not handled yet.")
         .id()
         .to_owned();
 
@@ -294,8 +295,7 @@ impl From<SavedTrack> for Song {
     let id = item
       .track
       .id
-      .context("Local songs are not handled yet.")
-      .unwrap()
+      .expect("Local songs are not handled yet.")
       .id()
       .to_owned();
 
