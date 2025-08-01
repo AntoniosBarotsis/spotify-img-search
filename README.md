@@ -1,5 +1,7 @@
 # spotify-img-search
 
+![](./assets/image.webp)
+
 TLDR: I often have an easier time remembering a song's thumbnail than its title, which is annoying
 if you are trying to find it. This project downloads all song covers from specified/all your
 playlists and uses [CLIP] to expose a search engine as a webserver.
