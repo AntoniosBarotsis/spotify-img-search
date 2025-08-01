@@ -1,3 +1,5 @@
+// TODO: make this a CLI, have a command for downloading playlists instead
+
 use std::collections::HashSet;
 
 use base64::Engine;
