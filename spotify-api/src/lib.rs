@@ -55,115 +55,108 @@ fn create_bar() -> ProgressBar {
   bar
 }
 
-async fn get_from_playlist(spotify: AuthCodeSpotify, client: Client) -> anyhow::Result<()> {
+async fn process_items<F, Fut, Item>(
+  client: Client,
+  fetch_page: F,
+  convert: impl Fn(Item) -> anyhow::Result<Song>,
+) -> anyhow::Result<()>
+where
+  F: Fn(u32, u32) -> Fut,
+  Fut: Future<Output = anyhow::Result<Page<Item>>>,
+  Item: for<'de> serde::de::Deserialize<'de>,
+{
   let mut handles = Vec::new();
-
   let bar = create_bar();
-
   let limit = 50;
   let mut offset = 0;
 
-  let id = PlaylistId::from_id("22nJr6nQ1OSEXKwipYOZ3j")?;
-
   loop {
-    let page = spotify
-      .playlist_items_manual(
-        id.clone(),
-        Some("items(track.id,track.name,track.album.images)"),
-        None,
-        Some(limit),
-        Some(offset),
-      )
-      .await?;
+    let page = fetch_page(limit, offset).await?;
 
     bar.set_length(u64::from(page.total));
     bar.set_message("Downloading song thumbnails");
 
     for item in page.items {
-      if let Ok(song) = Song::try_from(item) {
-        let handle = tokio::spawn(download_image(song, client.clone()));
-        handles.push(handle);
+      match convert(item) {
+        Ok(song) => {
+          let task = tokio::spawn(download_image(song, client.clone()));
+          handles.push(task);
+        }
+        Err(e) => {
+          eprintln!("Skipping item: {}", e);
+        }
       }
-
       bar.inc(1);
     }
 
-    // The iteration ends when the `next` field is `None`. Otherwise, the
-    // Spotify API will keep returning empty lists from then on.
     if page.next.is_none() {
       break;
     }
-
     offset += limit;
   }
 
   bar.finish_with_message("Done");
 
   let bar = create_bar();
-  bar.set_length(handles.len().try_into().unwrap());
+  bar.set_length(handles.len().try_into()?);
   bar.set_message("Joining background tasks");
 
   for task in handles {
-    // task.await?;
     if let Err(e) = task.await? {
-      dbg!(e);
+      eprintln!("Task error: {e}");
     }
     bar.inc(1);
   }
-  bar.finish_with_message("Done");
 
+  bar.finish_with_message("Done");
   Ok(())
 }
 
+async fn get_from_playlist(spotify: AuthCodeSpotify, client: Client) -> anyhow::Result<()> {
+  // TODO: Don't hardcode the id
+  let id = PlaylistId::from_id("22nJr6nQ1OSEXKwipYOZ3j")?;
+  let spotify_clone = spotify.clone();
+
+  process_items(
+    client,
+    move |limit, offset| {
+      let spotify = spotify_clone.clone();
+      let id = id.clone();
+      async move {
+        spotify
+          .playlist_items_manual(
+            id,
+            Some("items(track.id,track.name,track.album.images)"),
+            None,
+            Some(limit),
+            Some(offset),
+          )
+          .await
+          .map_err(Into::into)
+      }
+    },
+    Song::try_from,
+  )
+  .await
+}
+
 async fn get_from_liked(spotify: AuthCodeSpotify, client: Client) -> anyhow::Result<()> {
-  let mut handles = Vec::new();
+  let spotify_clone = spotify.clone();
 
-  let bar = create_bar();
-
-  let limit = 50;
-  let mut offset = 0;
-
-  loop {
-    let page = spotify
-      .current_user_saved_tracks_manual(None, Some(limit), Some(offset))
-      .await?;
-
-    bar.set_length(u64::from(page.total));
-    bar.set_message("Downloading song thumbnails");
-
-    for item in page.items {
-      let song = Song::from(item);
-
-      let handle = tokio::spawn(download_image(song, client.clone()));
-      handles.push(handle);
-      // download_image(song).await?;
-    }
-
-    // The iteration ends when the `next` field is `None`. Otherwise, the
-    // Spotify API will keep returning empty lists from then on.
-    if page.next.is_none() {
-      break;
-    }
-
-    offset += limit;
-  }
-
-  bar.finish_with_message("Done");
-
-  let bar = create_bar();
-  bar.set_length(handles.len().try_into().unwrap());
-  bar.set_message("Joining background tasks");
-
-  for task in handles {
-    // task.await?;
-    if let Err(e) = task.await? {
-      dbg!(e);
-    }
-    bar.inc(1);
-  }
-  bar.finish_with_message("Done");
-
-  Ok(())
+  process_items(
+    client,
+    move |limit, offset| {
+      let spotify = spotify_clone.clone();
+      async move {
+        spotify
+          .current_user_saved_tracks_manual(None, Some(limit), Some(offset))
+          .await
+          .map_err(Into::into)
+      }
+    },
+    |item| Ok(Song::from(item)),
+  )
+  .await
 }
 
 #[allow(unused)]

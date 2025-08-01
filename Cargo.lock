@@ -1544,6 +1544,7 @@ dependencies = [
  "indicatif",
  "reqwest",
  "rspotify",
+ "serde",
  "tokio",
 ]
 
