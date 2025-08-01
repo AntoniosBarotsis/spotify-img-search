@@ -1,0 +1,17 @@
+[package]
+name = "spotify-api"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.98"
+base64 = "0.22.1"
+indicatif = "0.18.0"
+reqwest = "0.12.22"
+rspotify = { version = "0.15.0", default-features = false, features = [
+  "env-file",
+  "client-reqwest",
+  "reqwest-rustls-tls",
+  "cli",
+] }
+tokio = { version = "1.47.0", features = ["fs", "macros", "rt-multi-thread"] }

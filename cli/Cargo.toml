@@ -1,0 +1,9 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1.47.0", features = ["fs", "macros", "rt-multi-thread"] }
+spotify-api = { path = "../spotify-api" }
+anyhow = "1.0.98"
