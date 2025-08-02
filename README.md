@@ -25,7 +25,7 @@ your terminal. You should only need to do that once.
 ## Some Numbers
 
 Using CUDA, my RTX 3070 computed embeddings for `11620` song covers in just under `5` minutes. Each
-search takes ~`50`ms (except the first one which takes like `200`ms).
+search takes ~`50`ms (except the first one which takes like `200`ms). The images take up `1.3`Gb.
 
 The embeddings are saved locally so they don't have to be recomputed every time. If any changes
 happen to the `images` folder (or if a different model is selected or something) then they will
